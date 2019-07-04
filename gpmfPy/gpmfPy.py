@@ -33,6 +33,7 @@ class gpmfStream(object):
 	classdocs
 	'''
 	bytesArray = []
+	index = 0
 
 	def __init__(self, bytesArray):
 		'''
@@ -61,6 +62,7 @@ class gpmfStream(object):
 					padds = 2
 				gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]])
 				i+=lsize*lrepeat+padds
+			self.index = i
 			return(gpmfKLV)
 		
 		key = str(self.bytesArray[i:i+4]) #chr(self.bytesArray[i])+chr(self.bytesArray[i+1])+chr(self.bytesArray[i+2])+chr(self.bytesArray[i+3])
@@ -77,49 +79,15 @@ class gpmfStream(object):
 		else:
 			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]]
 		if end == 0:
+			self.index = i
 			return(gpmfKLV)
 		else:
 			i += lsize*lrepeat+padds
+		self.index = i
 		return(gpmfKLV)
 	
 	def gpmfToList(self):
-		i=0
 		gpmfList = []
-		while True:
-			if i+8 > len(self.bytesArray):
-				break
-			key = chr(self.bytesArray[i])+chr(self.bytesArray[i+1])+chr(self.bytesArray[i+2])+chr(self.bytesArray[i+3])
-			i+=4
-			ltype = self.bytesArray[i]
-			lsize = self.bytesArray[i+1]
-			lrepeat = int(hex(self.bytesArray[i+2])[2:] + hex(self.bytesArray[i+3])[2:], 16)
-			padds = 0
-			i+=4
-			if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
-				oldKey = key
-				oldLen = lsize*lrepeat+padds
-				nestList = []
-				while True:
-					if i+8 > len(self.bytesArray):
-						break
-					key = chr(self.bytesArray[i])+chr(self.bytesArray[i+1])+chr(self.bytesArray[i+2])+chr(self.bytesArray[i+3])
-					i+=4
-					ltype = self.bytesArray[i]
-					lsize = self.bytesArray[i+1]
-					lrepeat = int(hex(self.bytesArray[i+2])[2:] + hex(self.bytesArray[i+3])[2:], 16)
-					i+=4
-					nestList.append([key, lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]])
-					i += lsize*lrepeat+padds
-				gpmfList.append([oldKey, oldLen, nestList])
-			else:
-				gpmfList.append([key, lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]])
-				i += lsize*lrepeat+padds
-			
-# 			print(key)
-# 			print(chr(ltype)== GPMF_TYPE.GPMF_TYPE_NEST)
-# 			print(lsize)
-# 			print(lrepeat)
-# 			print("-------------")
-# 		print(len(gpmfList))
-		for i in gpmfList:
-			print(i)
+		while self.index < len(self.bytesArray):
+			gpmfList.append(self.getGpmfAt(self.index))
+		return gpmfList
