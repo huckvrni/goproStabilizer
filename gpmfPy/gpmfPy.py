@@ -55,7 +55,9 @@ class gpmfStream(object):
 					end=lsize*lrepeat+padds+i
 					gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, end)])
 					break
-				if self.bytesArray[i+(lsize*lrepeat)] == 0 and self.bytesArray[i+(lsize*lrepeat)+1] == 0: #chr(ltype) == GPMF_TYPE.GPMF_TYPE_STRING_ASCII.value and lsize == 1:
+				if lsize*lrepeat%4!=0:
+					padds = 2
+				if self.bytesArray[i+(lsize*lrepeat)] == 0: #chr(ltype) == GPMF_TYPE.GPMF_TYPE_STRING_ASCII.value and lsize == 1:
 					padds = 2
 				gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]])
 				i+=lsize*lrepeat+padds
