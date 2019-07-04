@@ -55,7 +55,7 @@ class gpmfStream(object):
 				padds = 0
 				i+=4
 				if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
-					end=lsize*lrepeat+padds
+					end=lsize*lrepeat+padds+i
 					gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, end)])
 					break
 				if self.bytesArray[i+(lsize*lrepeat)] == 0: #chr(ltype) == GPMF_TYPE.GPMF_TYPE_STRING_ASCII.value and lsize == 1:
@@ -74,7 +74,7 @@ class gpmfStream(object):
 		i+=4
 		
 		if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
-			end=lsize*lrepeat+padds
+			end=lsize*lrepeat+padds+i
 			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, end)]
 		else:
 			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]]
