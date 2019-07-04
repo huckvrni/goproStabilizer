@@ -47,13 +47,9 @@ class gpmfStream(object):
 		if end != 0:
 			gpmfKLV = []
 			while i < end:
-				key = str(self.bytesArray[i:i+4]) #chr(self.bytesArray[i])+chr(self.bytesArray[i+1])+chr(self.bytesArray[i+2])+chr(self.bytesArray[i+3])
-				i+=4
-				ltype = self.bytesArray[i]
-				lsize = self.bytesArray[i+1]
-				lrepeat = int(hex(self.bytesArray[i+2])[2:] + hex(self.bytesArray[i+3])[2:], 16)
+				key, ltype, lsize, lrepeat = self.resolveKlv(i)
+				i+=8
 				padds = 0
-				i+=4
 				print(str(key) + "----" + str(i))
 				if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
 					end=lsize*lrepeat+padds+i
@@ -66,13 +62,9 @@ class gpmfStream(object):
 			self.index = i
 			return(gpmfKLV)
 		
-		key = str(self.bytesArray[i:i+4]) #chr(self.bytesArray[i])+chr(self.bytesArray[i+1])+chr(self.bytesArray[i+2])+chr(self.bytesArray[i+3])
-		i+=4
-		ltype = self.bytesArray[i]
-		lsize = self.bytesArray[i+1]
-		lrepeat = int(hex(self.bytesArray[i+2])[2:] + hex(self.bytesArray[i+3])[2:], 16)
+		key, ltype, lsize, lrepeat = self.resolveKlv(i)
+		i+=8
 		padds = 0
-		i+=4
 		if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
 			end=lsize*lrepeat+padds+i
 			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, end)]
@@ -85,6 +77,14 @@ class gpmfStream(object):
 			i += lsize*lrepeat+padds
 		self.index = i
 		return(gpmfKLV)
+	
+	def resolveKlv(self, i):
+		key = str(self.bytesArray[i:i+4]) #chr(self.bytesArray[i])+chr(self.bytesArray[i+1])+chr(self.bytesArray[i+2])+chr(self.bytesArray[i+3])
+		i+=4
+		ltype = self.bytesArray[i]
+		lsize = self.bytesArray[i+1]
+		lrepeat = int(hex(self.bytesArray[i+2])[2:] + hex(self.bytesArray[i+3])[2:], 16)
+		return([key, ltype, lsize, lrepeat])
 	
 	def gpmfToList(self):
 		gpmfList = []
