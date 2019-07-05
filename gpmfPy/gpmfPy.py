@@ -51,15 +51,16 @@ class gpmfStream(object):
 				i+=8
 				padds = 0
 				print(str(key) + "----" + str(i))
-				if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
-					end=lsize*lrepeat+padds+i
-					gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, end)])
-					break
 				if lsize*lrepeat%4!=0:
-					padds = 2
-				if self.bytesArray[i+(lsize*lrepeat)] == 0: #chr(ltype) == GPMF_TYPE.GPMF_TYPE_STRING_ASCII.value and lsize == 1:
-					padds = 2
-				gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]])
+					padds = 4-(lsize*lrepeat%4)
+# 				if self.bytesArray[i+(lsize*lrepeat)] == 0: #chr(ltype) == GPMF_TYPE.GPMF_TYPE_STRING_ASCII.value and lsize == 1:
+# 					padds = 2
+				if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
+					currend=lsize*lrepeat+padds+i
+					gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, currend)])
+# 					break
+				else:
+					gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]])
 				i+=lsize*lrepeat+padds
 			self.index = i
 			return(gpmfKLV)
@@ -68,8 +69,9 @@ class gpmfStream(object):
 		i+=8
 		padds = 0
 		if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
+			currend=lsize*lrepeat+padds+i
 			end=lsize*lrepeat+padds+i
-			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, end)]
+			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, currend)]
 		else:
 			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]]
 		if end == 0:
@@ -85,7 +87,7 @@ class gpmfStream(object):
 		i+=4
 		ltype = self.bytesArray[i]
 		lsize = self.bytesArray[i+1]
-		lrepeat = int(hex(self.bytesArray[i+2])[2:] + hex(self.bytesArray[i+3])[2:], 16)
+		lrepeat = int(self.bytesArray[i+2:i+3].hex() + self.bytesArray[i+3:i+4].hex(), 16)
 		return([key, ltype, lsize, lrepeat])
 	
 	def gpmfToList(self):
