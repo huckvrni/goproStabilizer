@@ -109,5 +109,5 @@ class gpmfStream(object):
 		for x in self.gpmfList:
 			for stream in x[-1]:
 				if str(bytes(key, "ASCII")) == stream[-1][-1][0]:
-					keyList.append(stream[-1][-1])
+					keyList.append([stream[-1][0][-1][0], stream[-1][-1][-1]])
 		return(keyList)

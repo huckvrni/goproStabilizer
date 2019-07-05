@@ -40,9 +40,16 @@ with open("out.bin", "rb") as f:
     hexData = f.read()
  
 gpmf = gpmfStream(hexData)
-for i in gpmf.getStream("GYRO")[0][-1]:
-    [print(twos_complement(i[x:x+2].hex(), 16)) for x in range(0, 3)]
-    print()
+print(int(gpmf.getStream("GYRO")[0][0].hex() ,16))
+for x in range(1, len(gpmf.getStream("GYRO"))-2):
+    print(int(gpmf.getStream("GYRO")[x][0].hex() ,16) - int(gpmf.getStream("GYRO")[x-1][0].hex() ,16))
+
+
+# for index,i in enumerate(gpmf.getStream("GYRO")[0][-1]):
+#     [print(twos_complement(i[x:x+2].hex(), 16)) for x in range(0, 3)]
+#     print()
+
+
 # print(int(gpmf.getStream("GYRO")[0][-1][0].hex(), 16))
 # with open('output.txt', 'wt') as out:
 #     gpmfList = gpmf.getGpmfList()
