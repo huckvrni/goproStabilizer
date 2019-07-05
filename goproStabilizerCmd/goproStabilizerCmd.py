@@ -27,14 +27,16 @@ if not len(sys.argv) > 1:
 if not Path(sys.argv[1]).is_file():
     print("File not found or it does not exist")
 
-subprocess.run(["ffmpeg", "-y", "-i", sys.argv[1], "-codec", "copy", "-map", "0:3", "-f", "rawvideo", "out.bin"])
 
+# subprocess.run(["ffmpeg", "-y", "-i", sys.argv[1], "-codec", "copy", "-map", "0:3", "-f", "rawvideo", "out.bin"])
+# 
 with open("out.bin", "rb") as f:
     hexData = f.read()
-
+ 
 gpmf = gpmfStream(hexData)
-with open('output.txt', 'wt') as out:
-    gpmfList = gpmf.getGpmfList()
-    pprint(gpmfList, stream=out)
+print(gpmf.getKeyParent("DVID"))
+# with open('output.txt', 'wt') as out:
+#     gpmfList = gpmf.getGpmfList()
+#     pprint(gpmfList, stream=out)
 
 print("done!")

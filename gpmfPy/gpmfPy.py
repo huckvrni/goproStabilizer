@@ -5,6 +5,7 @@ Created on 3 Jul 2019
 '''
 from enum import Enum
 from _ast import If
+from builtins import isinstance
 
 class GPMF_TYPE(Enum):
 	GPMF_TYPE_STRING_ASCII = 'c' #single byte 'c' style character string
@@ -42,6 +43,7 @@ class gpmfStream(object):
 		'''
 		self.bytesArray = bytesArray
 		self.gpmfList = self.__gpmfToList()
+
 	def getGpmfList(self):
 		if len(self.gpmfList) > 0:
 			return self.gpmfList
@@ -58,7 +60,6 @@ class gpmfStream(object):
 				key, ltype, lsize, lrepeat = self.resolveKlv(i)
 				i+=8
 				padds = 0
-				print(str(key) + "----" + str(i))
 				if lsize*lrepeat%4!=0:
 					padds = 4-(lsize*lrepeat%4)
 # 				if self.bytesArray[i+(lsize*lrepeat)] == 0: #chr(ltype) == GPMF_TYPE.GPMF_TYPE_STRING_ASCII.value and lsize == 1:
@@ -104,3 +105,15 @@ class gpmfStream(object):
 		while self.index < len(self.bytesArray):
 			gpmfList.append(self.getGpmfAt(self.index))
 		return gpmfList
+
+	def getKeyParent(self, key, glist=0):
+		if glist == 0: glist=self.gpmfList
+		for x in glist:
+			if x[0] == bytes(key, "ASCII"):
+				return(x)
+			elif isinstance(x[-1], list):
+				val = self.getKeyParent(key, x[-1])
+				if val is None:
+					continue
+				else: return(val)
+			
