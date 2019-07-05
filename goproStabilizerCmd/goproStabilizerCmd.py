@@ -21,6 +21,12 @@ from pathlib import Path
 from gpmfPy.gpmfPy import gpmfStream
 from pprint import pprint
 
+def twos_complement(hexstr,bits):
+    value = int(hexstr,16)
+    if value & (1 << (bits-1)):
+        value -= 1 << bits
+    return value
+
 if not len(sys.argv) > 1:
     print("you have to at leat input one video.\nUsage: goproStabilize input.mp4")
 
@@ -34,7 +40,10 @@ with open("out.bin", "rb") as f:
     hexData = f.read()
  
 gpmf = gpmfStream(hexData)
-print(int(gpmf.getStream("GYRO")[0][-1][0].hex(), 16))
+for i in gpmf.getStream("GYRO")[0][-1]:
+    [print(twos_complement(i[x:x+2].hex(), 16)) for x in range(0, 3)]
+    print()
+# print(int(gpmf.getStream("GYRO")[0][-1][0].hex(), 16))
 # with open('output.txt', 'wt') as out:
 #     gpmfList = gpmf.getGpmfList()
 #     pprint(gpmfList, stream=out)
