@@ -4,8 +4,6 @@ Created on 3 Jul 2019
 @author: herman
 '''
 from enum import Enum
-from _ast import If
-from builtins import isinstance
 
 class GPMF_TYPE(Enum):
 	GPMF_TYPE_STRING_ASCII = 'c' #single byte 'c' style character string
@@ -106,14 +104,10 @@ class gpmfStream(object):
 			gpmfList.append(self.getGpmfAt(self.index))
 		return gpmfList
 
-	def getKeyParent(self, key, glist=0):
-		if glist == 0: glist=self.gpmfList
-		for x in glist:
-			if x[0] == bytes(key, "ASCII"):
-				return(x)
-			elif isinstance(x[-1], list):
-				val = self.getKeyParent(key, x[-1])
-				if val is None:
-					continue
-				else: return(val)
-			
+	def getStream(self, key):
+		keyList = []
+		for x in self.gpmfList:
+			for stream in x[-1]:
+				if str(bytes(key, "ASCII")) == stream[-1][-1][0]:
+					keyList.append(stream[-1][-1])
+		return(keyList)

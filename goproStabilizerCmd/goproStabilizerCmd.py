@@ -34,7 +34,7 @@ with open("out.bin", "rb") as f:
     hexData = f.read()
  
 gpmf = gpmfStream(hexData)
-print(gpmf.getKeyParent("DVID"))
+print(int(gpmf.getStream("GYRO")[0][-1][0].hex(), 16))
 # with open('output.txt', 'wt') as out:
 #     gpmfList = gpmf.getGpmfList()
 #     pprint(gpmfList, stream=out)
