@@ -34,6 +34,7 @@ with open("out.bin", "rb") as f:
 
 gpmf = gpmfStream(hexData)
 with open('output.txt', 'wt') as out:
-    pprint(gpmf.gpmfToList(), stream=out)
+    gpmfList = gpmf.getGpmfList()
+    pprint(gpmfList, stream=out)
 
 print("done!")

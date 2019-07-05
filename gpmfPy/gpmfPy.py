@@ -33,6 +33,7 @@ class gpmfStream(object):
 	classdocs
 	'''
 	bytesArray = []
+	gpmfList = []
 	index = 0
 
 	def __init__(self, bytesArray):
@@ -40,6 +41,13 @@ class gpmfStream(object):
 		Constructor
 		'''
 		self.bytesArray = bytesArray
+		self.gpmfList = self.__gpmfToList()
+	def getGpmfList(self):
+		if len(self.gpmfList) > 0:
+			return self.gpmfList
+		else:
+			self.gpmfList = self.__gpmfToList()
+		return self.gpmfList
 	
 	def getGpmfAt(self, i, end=0):
 		if i+8 > len(self.bytesArray):
@@ -57,10 +65,11 @@ class gpmfStream(object):
 # 					padds = 2
 				if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
 					currend=lsize*lrepeat+padds+i
-					gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, currend)])
+					data = self.getGpmfAt(i, currend)
 # 					break
 				else:
-					gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]])
+					data = [self.bytesArray[i:i+(lsize*lrepeat+padds)][k:k+lsize] for k in range(0, len(self.bytesArray[i:i+(lsize*lrepeat+padds)]), lsize)]
+				gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, data])
 				i+=lsize*lrepeat+padds
 			self.index = i
 			return(gpmfKLV)
@@ -90,7 +99,7 @@ class gpmfStream(object):
 		lrepeat = int(self.bytesArray[i+2:i+3].hex() + self.bytesArray[i+3:i+4].hex(), 16)
 		return([key, ltype, lsize, lrepeat])
 	
-	def gpmfToList(self):
+	def __gpmfToList(self):
 		gpmfList = []
 		while self.index < len(self.bytesArray):
 			gpmfList.append(self.getGpmfAt(self.index))
