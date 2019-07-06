@@ -67,8 +67,8 @@ class gpmfStream(object):
 					data = self.getGpmfAt(i, currend)
 # 					break
 				else:
-					data = [self.bytesArray[i:i+(lsize*lrepeat+padds)][k:k+lsize] for k in range(0, len(self.bytesArray[i:i+(lsize*lrepeat+padds)]), lsize)]
-				gpmfKLV.append([key, chr(ltype), lsize*lrepeat+padds, data])
+					data = [self.bytesArray[i:i+(lsize*lrepeat)][k:k+lsize] for k in range(0, len(self.bytesArray[i:i+(lsize*lrepeat)]), lsize)]
+				gpmfKLV.append([key, chr(ltype), lsize*lrepeat, data])
 				i+=lsize*lrepeat+padds
 			self.index = i
 			return(gpmfKLV)
@@ -79,9 +79,9 @@ class gpmfStream(object):
 		if ltype == GPMF_TYPE.GPMF_TYPE_NEST.value:
 			currend=lsize*lrepeat+padds+i
 			end=lsize*lrepeat+padds+i
-			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.getGpmfAt(i, currend)]
+			gpmfKLV = [key, chr(ltype), lsize*lrepeat, self.getGpmfAt(i, currend)]
 		else:
-			gpmfKLV = [key, chr(ltype), lsize*lrepeat+padds, self.bytesArray[i:i+(lsize*lrepeat+padds)]]
+			gpmfKLV = [key, chr(ltype), lsize*lrepeat, self.bytesArray[i:i+(lsize*lrepeat)]]
 		if end == 0:
 			self.index = i
 			return(gpmfKLV)
