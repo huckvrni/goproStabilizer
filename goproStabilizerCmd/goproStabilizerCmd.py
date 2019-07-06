@@ -46,15 +46,22 @@ with open("out.bin", "rb") as f:
 gpmf = gpmfStream(hexData)
 
 gyroStreams = gpmf.getStream("GYRO")
-print(1)
+# print(gyroStreams)
 
 for i, stream in enumerate(gyroStreams):
-    for x in stream[1]:
-        print(x.hex())
-        print("z: " + str(twos_complement(x[0:1].hex(), 16)))
-        print("x: " + str(twos_complement(x[2:3].hex(), 16)))
-        print("y: " + str(twos_complement(x[4:5].hex(), 16)))
-    print(i)
+    num=0
+    x=0
+    y=0
+    z=0
+    for data in stream[2]:
+        num+=1
+        z+=twos_complement(data[0:1].hex(), 16) / twos_complement(stream[1].hex(), 16)
+        x+=twos_complement(data[2:3].hex(), 16) / twos_complement(stream[1].hex(), 16)
+        y+=twos_complement(data[4:5].hex(), 16) / twos_complement(stream[1].hex(), 16)
+    x/=num
+    y/=num
+    z/=num
+    print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
     print()
 
 # print(int(gpmf.getStream("GYRO")[0][0].hex() ,16))
