@@ -35,16 +35,14 @@ def split(a, n):
     elif type(n) is float:
         ret = []
         temp = []
-        for i, item in enumerate(a):
-            if len(temp) == 0 and len(a)-i < int(n):
-                temp = a[i:]
+        for i in range(len(a)):
+            temp.append(a[i])
+            if i%int(n) == 0:
+                temp.append(a[i+1])
                 ret.append(temp)
-                return(ret)
-            if len(temp) < int(n):
-                temp.append(item)
-            else:
-                ret.append(temp)
-                temp = []
+                temp=[]
+                next(i)
+            
         return(ret)
     else:
         raise ValueError("expected int or float")
@@ -81,16 +79,23 @@ with open("out.bin", "rb") as f:
 gpmf = gpmfStream(hexData)
  
 gyroStreams = gpmf.getStream("GYRO")
-# print(gyroStreams)
+# for i in gyroStreams:
+#     totalSmaples = i[0][-1][0]
+#     tick = i[1][-1][0]
+#     scale = i[-2][-1][0]
+#     data = i[-1][-1][0]
+#     print(str(totalSmaples) + " " +str(int(tick.hex(), 32)) + " " +str(scale) + " " +str(data))
+
 
 for i, stream in enumerate(gyroStreams):
     num=0
     x=0
     y=0
     z=0
-    samples = int(stream[0].hex(), 16) - int(gyroStreams[i-1][0].hex(), 16) if i > 0 else int(gyroStreams[0][0].hex(), 16)
-#     print(samples/rate)
-#     print([len(x) for x in split(stream[2], samples/rate)])
+    print(stream[0][-1])
+    samples = int(stream[0][-1][0].hex(), 16) - int(gyroStreams[i-1][0][-1][0].hex(), 16) if i > 0 else int(gyroStreams[0][0][-1][0].hex(), 16)
+    print(samples/rate)
+    print([len(x) for x in split(stream[2], samples/rate)])
     for data in stream[2]:
         num+=1
         z+=twos_complement(data[0:1].hex(), 16) / twos_complement(stream[1].hex(), 16)
@@ -99,7 +104,7 @@ for i, stream in enumerate(gyroStreams):
     x/=num
     y/=num
     z/=num
-    print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
+#     print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
     print()
 
 #ffplay -i GOPR9173.mp4 -vf lenscorrection=k1=-0.5:k2=0.5
