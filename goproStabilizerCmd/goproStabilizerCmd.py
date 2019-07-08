@@ -21,6 +21,7 @@ from pathlib import Path
 from gpmfPy.gpmfPy import gpmfStream
 from pprint import pprint
 import os
+import math
 
 def twos_complement(hexstr,bits):
     value = int(hexstr,16)
@@ -77,7 +78,8 @@ else:
     raise ValueError("framerate couldn't be found.")
 
 # os.makedirs("/tmp/goprostabilizer", exist_ok=True)
-# subprocess.run(["ffmpeg", "-i", sys.argv[1], "/tmp/goprostabilizer/%d.tiff"])
+# subprocess.run(["ffmpeg", "-i", sys.argv[1], "/tmp/goprostabilizer/%d.tif"])
+# os.makedirs("/tmp/goprostabilizer/rotate", exist_ok=True)
 
 with open("out.bin", "rb") as f:
     hexData = f.read()
@@ -92,20 +94,24 @@ gyroStreams = gpmf.getStream("GYRO")
 #     data = i[-1][-1][0]
 #     print(str(totalSmaples) + " " +str(int(tick.hex(), 32)) + " " +str(scale) + " " +str(data))
 
-
-for i, stream in enumerate(gyroStreams):
-    x=0
-    y=0
-    z=0
-    a=split(stream[-1][-1], rate)
-    scale = int(stream[-2][-1][0].hex(), 16)
-    for cell in a:
-        for data in cell:
-            z+=twos_complement(data[0:2].hex(), 16) / scale
-            x+=twos_complement(data[2:4].hex(), 16) / scale
-            y+=twos_complement(data[4:6].hex(), 16) / scale
-        print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
-    print()
+with open("/tmp/goprostabilizer/gmCommands.txt", "w") as out:
+    j=0
+    for i, stream in enumerate(gyroStreams):
+        x=0
+        y=0
+        z=0
+        a=split(stream[-1][-1], rate)
+        scale = int(stream[-2][-1][0].hex(), 16)
+        for cell in a:
+            j+=1
+            for data in cell:
+                z+=math.radians(twos_complement(data[0:2].hex(), 16) / scale)
+                x+=math.radians(twos_complement(data[2:4].hex(), 16) / scale)
+                y+=math.radians(twos_complement(data[4:6].hex(), 16) / scale)
+            print(j)
+#             out.write("convert -verbose "+ str(j+i) + ".tif -rotate " + str(-y) + " rotate/" + str(j+i) +".tif\n")
+#             print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
+        print()
 
 print("done!")
 
