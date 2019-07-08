@@ -43,7 +43,6 @@ def split(a, n):
             if num == adder and len(cell)>=cellSize:
                 num=0
                 cell.append(a[i])
-                continue
             
             if len(cell)>=cellSize:
                 ret.append(cell)
@@ -60,13 +59,15 @@ def printGpmfToFile():
     pprint(gpmfList, stream=out)
 
 if not len(sys.argv) > 1:
-    print("you have to at leat input one video.\nUsage: goproStabilize input.mp4")
+    print("you have to at least input one video.\nUsage: goproStabilize input.mp4")
+    sys.exit(1)
 
 if not Path(sys.argv[1]).is_file():
     print("File not found or it does not exist")
+    sys.exit(1)
 
 
-# subprocess.run(["ffmpeg", "-y", "-i", sys.argv[1], "-codec", "copy", "-map", "0:3", "-f", "rawvideo", "out.bin"])
+subprocess.run(["ffmpeg", "-y", "-i", sys.argv[1], "-codec", "copy", "-map", "0:3", "-f", "rawvideo", "out.bin"])
 process = subprocess.Popen(["ffprobe", "-v", "0", "-of", "csv=p=0", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", sys.argv[1]], stdout=subprocess.PIPE)
 out, err = process.communicate()
 rate = out[:-1].decode("utf-8").split('/')
@@ -77,47 +78,37 @@ elif len(rate)==2:
 else:
     raise ValueError("framerate couldn't be found.")
 
-# os.makedirs("/tmp/goprostabilizer", exist_ok=True)
-# subprocess.run(["ffmpeg", "-i", sys.argv[1], "/tmp/goprostabilizer/%d.tif"])
-# os.makedirs("/tmp/goprostabilizer/rotate", exist_ok=True)
+os.makedirs("/tmp/goprostabilizer", exist_ok=True)
+subprocess.run(["ffmpeg", "-i", sys.argv[1], "/tmp/goprostabilizer/%d.tif"])
+os.makedirs("/tmp/goprostabilizer/rotate", exist_ok=True)
 
 with open("out.bin", "rb") as f:
     hexData = f.read()
-  
+
 gpmf = gpmfStream(hexData)
- 
 gyroStreams = gpmf.getStream("GYRO")
-# for i in gyroStreams:
-#     totalSmaples = i[0][-1][0]
-#     tick = i[1][-1][0]
-#     scale = i[-2][-1][0]
-#     data = i[-1][-1][0]
-#     print(str(totalSmaples) + " " +str(int(tick.hex(), 32)) + " " +str(scale) + " " +str(data))
+
+j=0
+GMcommands = ""
+for i, stream in enumerate(gyroStreams):
+    x=0
+    y=0
+    z=0
+    a=split(stream[-1][-1], rate)
+    scale = int(stream[-2][-1][0].hex(), 16)
+    for cell in a:
+        j+=1
+        for data in cell:
+            z+=math.radians(twos_complement(data[0:2].hex(), 16) / scale)
+            x+=math.radians(twos_complement(data[2:4].hex(), 16) / scale)
+            y+=math.radians(twos_complement(data[4:6].hex(), 16) / scale)
+#             print(j)
+        GMcommands += ("convert -verbose "+ str(j) + ".tif -rotate " + str(-y*11) + " -gravity center -crop 50% rotate/" + str(j) +".tif\n")
+#             print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
+    print()
 
 with open("/tmp/goprostabilizer/gmCommands.txt", "w") as out:
-    j=0
-    for i, stream in enumerate(gyroStreams):
-        x=0
-        y=0
-        z=0
-        a=split(stream[-1][-1], rate)
-        scale = int(stream[-2][-1][0].hex(), 16)
-        for cell in a:
-            j+=1
-            for data in cell:
-                z+=math.radians(twos_complement(data[0:2].hex(), 16) / scale)
-                x+=math.radians(twos_complement(data[2:4].hex(), 16) / scale)
-                y+=math.radians(twos_complement(data[4:6].hex(), 16) / scale)
-            print(j)
-#             out.write("convert -verbose "+ str(j+i) + ".tif -rotate " + str(-y) + " rotate/" + str(j+i) +".tif\n")
-#             print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
-        print()
-
+    out.write(GMcommands)
 print("done!")
 
 #ffplay -i GOPR9173.mp4 -vf lenscorrection=k1=-0.5:k2=0.5
-
-# print(int(gpmf.getStream("GYRO")[0][-1][0].hex(), 16))
-
-#     samples = int(stream[0][-1][0].hex(), 16) - int(gyroStreams[i-1][0][-1][0].hex(), 16) if i > 0 else int(gyroStreams[0][0][-1][0].hex(), 16)
-#     print(samples)
