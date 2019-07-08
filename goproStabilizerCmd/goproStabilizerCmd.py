@@ -22,12 +22,7 @@ from gpmfPy.gpmfPy import gpmfStream
 from pprint import pprint
 import os
 import math
-
-def twos_complement(hexstr,bits):
-    value = int(hexstr,16)
-    if value & (1 << (bits-1)):
-        value -= 1 << bits
-    return value
+from struct import unpack
 
 def split(a, n):
     if type(n) is int:
@@ -103,19 +98,19 @@ for i, stream in enumerate(gyroStreams):
     for cell in a:
         j+=1
         for data in cell:
-            z=twos_complement(data[0:2].hex(), 16) / scale
-            x=twos_complement(data[2:4].hex(), 16) / scale
-            y=twos_complement(data[4:6].hex(), 16) / scale
-            lz += math.degrees(z) if math.fabs(z)>0.1 else 0
-            lx += math.degrees(x) if math.fabs(x)>0.1 else 0
-            ly += math.degrees(y) if math.fabs(y)>0.1 else 0
+            z=unpack('>h', data[0:2])[0] / scale
+            x=unpack('>h', data[2:4])[0] / scale
+            y=unpack('>h', data[4:6])[0] / scale
+            lz += math.degrees(z) if math.fabs(z)>0.05 else 0
+            lx += math.degrees(x) if math.fabs(x)>0.05 else 0
+            ly += math.degrees(y) if math.fabs(y)>0.05 else 0
 #             print(twos_complement(data[4:6].hex(), 16) / scale))
 #         z+=math.degrees(twos_complement(cell[-1][0:2].hex(), 16) / scale)
 #         x+=math.degrees(twos_complement(cell[-1][2:4].hex(), 16) / scale)
 #         y+=math.degrees(twos_complement(cell[-1][4:6].hex(), 16) / scale)/100
 #         print(str(i) + " " + str(y))
-        GMcommands += ("x: " + str(lx) + " y: " + str(ly) + " z: " + str(lz) + "\n")
-#         GMcommands += ("convert -verbose "+ str(j) + ".tif -rotate " + str(-y) + " rotate/" + str(j) +".tif\n") # -gravity center -crop 50% 
+        GMcommands += ("x: " + str(lx) + " y: " + str(ly) + " z: " + str(lz) + ", " + str(unpack('>f', stream[3][-1][0])[0]) + "\n")
+#         GMcommands += ("convert -verbose "+ str(j) + ".tif -rotate " + str(-ly) + " -gravity center -crop 50% rotate/" + str(j) +".tif\n") # -gravity center -crop 50% 
 #             print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
     print()
 
