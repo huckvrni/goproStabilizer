@@ -34,15 +34,21 @@ def split(a, n):
         return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
     elif type(n) is float:
         ret = []
-        temp = []
+        cell = []
+        num=0
+        adder=int(n/(len(a)%n)+.5)
+        cellSize=int(len(a)/n+.5)
         for i in range(len(a)):
-            temp.append(a[i])
-            if i%int(n) == 0:
-                temp.append(a[i+1])
-                ret.append(temp)
-                temp=[]
-                next(i)
+            if num == adder and len(cell)>=cellSize:
+                num=0
+                cell.append(a[i])
+                continue
             
+            if len(cell)>=cellSize:
+                ret.append(cell)
+                cell=[]
+                num+=1
+            cell.append(a[i])
         return(ret)
     else:
         raise ValueError("expected int or float")
@@ -88,27 +94,24 @@ gyroStreams = gpmf.getStream("GYRO")
 
 
 for i, stream in enumerate(gyroStreams):
-    num=0
     x=0
     y=0
     z=0
-    print(stream[0][-1])
-    samples = int(stream[0][-1][0].hex(), 16) - int(gyroStreams[i-1][0][-1][0].hex(), 16) if i > 0 else int(gyroStreams[0][0][-1][0].hex(), 16)
-    print(samples/rate)
-    print([len(x) for x in split(stream[2], samples/rate)])
-    for data in stream[2]:
-        num+=1
-        z+=twos_complement(data[0:1].hex(), 16) / twos_complement(stream[1].hex(), 16)
-        x+=twos_complement(data[2:3].hex(), 16) / twos_complement(stream[1].hex(), 16)
-        y+=twos_complement(data[4:5].hex(), 16) / twos_complement(stream[1].hex(), 16)
-    x/=num
-    y/=num
-    z/=num
-#     print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
+    a=split(stream[-1][-1], rate)
+    scale = int(stream[-2][-1][0].hex(), 16)
+    for cell in a:
+        for data in cell:
+            z+=twos_complement(data[0:2].hex(), 16) / scale
+            x+=twos_complement(data[2:4].hex(), 16) / scale
+            y+=twos_complement(data[4:6].hex(), 16) / scale
+        print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
     print()
+
+print("done!")
 
 #ffplay -i GOPR9173.mp4 -vf lenscorrection=k1=-0.5:k2=0.5
 
 # print(int(gpmf.getStream("GYRO")[0][-1][0].hex(), 16))
 
-print("done!")
+#     samples = int(stream[0][-1][0].hex(), 16) - int(gyroStreams[i-1][0][-1][0].hex(), 16) if i > 0 else int(gyroStreams[0][0][-1][0].hex(), 16)
+#     print(samples)
