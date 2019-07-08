@@ -67,10 +67,11 @@ if not Path(sys.argv[1]).is_file():
     sys.exit(1)
 
 
-subprocess.run(["ffmpeg", "-y", "-i", sys.argv[1], "-codec", "copy", "-map", "0:3", "-f", "rawvideo", "out.bin"])
+# subprocess.run(["ffmpeg", "-y", "-i", sys.argv[1], "-codec", "copy", "-map", "0:3", "-f", "rawvideo", "out.bin"])
 process = subprocess.Popen(["ffprobe", "-v", "0", "-of", "csv=p=0", "-select_streams", "v:0", "-show_entries", "stream=r_frame_rate", sys.argv[1]], stdout=subprocess.PIPE)
 out, err = process.communicate()
 rate = out[:-1].decode("utf-8").split('/')
+
 if len(rate)==1:
     rate = float(rate[0])
 elif len(rate)==2:
@@ -78,9 +79,9 @@ elif len(rate)==2:
 else:
     raise ValueError("framerate couldn't be found.")
 
-os.makedirs("/tmp/goprostabilizer", exist_ok=True)
-subprocess.run(["ffmpeg", "-i", sys.argv[1], "/tmp/goprostabilizer/%d.tif"])
-os.makedirs("/tmp/goprostabilizer/rotate", exist_ok=True)
+# os.makedirs("/tmp/goprostabilizer", exist_ok=True)
+# subprocess.run(["ffmpeg", "-i", sys.argv[1], "/tmp/goprostabilizer/%d.tif"])
+# os.makedirs("/tmp/goprostabilizer/rotate", exist_ok=True)
 
 with open("out.bin", "rb") as f:
     hexData = f.read()
@@ -90,20 +91,31 @@ gyroStreams = gpmf.getStream("GYRO")
 
 j=0
 GMcommands = ""
+lx=0
+ly=0
+lz=0
 for i, stream in enumerate(gyroStreams):
-    x=0
-    y=0
-    z=0
+#     x=0
+#     y=0
+#     z=0
     a=split(stream[-1][-1], rate)
     scale = int(stream[-2][-1][0].hex(), 16)
     for cell in a:
         j+=1
         for data in cell:
-            z+=math.radians(twos_complement(data[0:2].hex(), 16) / scale)
-            x+=math.radians(twos_complement(data[2:4].hex(), 16) / scale)
-            y+=math.radians(twos_complement(data[4:6].hex(), 16) / scale)
-#             print(j)
-        GMcommands += ("convert -verbose "+ str(j) + ".tif -rotate " + str(-y*11) + " -gravity center -crop 50% rotate/" + str(j) +".tif\n")
+            z=twos_complement(data[0:2].hex(), 16) / scale
+            x=twos_complement(data[2:4].hex(), 16) / scale
+            y=twos_complement(data[4:6].hex(), 16) / scale
+            lz += math.degrees(z) if math.fabs(z)>0.1 else 0
+            lx += math.degrees(x) if math.fabs(x)>0.1 else 0
+            ly += math.degrees(y) if math.fabs(y)>0.1 else 0
+#             print(twos_complement(data[4:6].hex(), 16) / scale))
+#         z+=math.degrees(twos_complement(cell[-1][0:2].hex(), 16) / scale)
+#         x+=math.degrees(twos_complement(cell[-1][2:4].hex(), 16) / scale)
+#         y+=math.degrees(twos_complement(cell[-1][4:6].hex(), 16) / scale)/100
+#         print(str(i) + " " + str(y))
+        GMcommands += ("x: " + str(lx) + " y: " + str(ly) + " z: " + str(lz) + "\n")
+#         GMcommands += ("convert -verbose "+ str(j) + ".tif -rotate " + str(-y) + " rotate/" + str(j) +".tif\n") # -gravity center -crop 50% 
 #             print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
     print()
 
