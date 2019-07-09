@@ -75,7 +75,7 @@ else:
     raise ValueError("framerate couldn't be found.")
 
 # os.makedirs("/tmp/goprostabilizer", exist_ok=True)
-# subprocess.run(["ffmpeg", "-i", sys.argv[1], "/tmp/goprostabilizer/%d.tif"])
+# subprocess.run(["ffmpeg", "-i", sys.argv[1], "-vf", "lenscorrection=k1=-0.51:k2=0.34", "/tmp/goprostabilizer/%d.tif"])
 # os.makedirs("/tmp/goprostabilizer/rotate", exist_ok=True)
 
 with open("out.bin", "rb") as f:
@@ -95,19 +95,20 @@ z=[]
 for i, stream in enumerate(gyroStreams):
     a=split(stream[-1][-1], rate)
     scale = unpack('>h', stream[-2][-1][0])[0]
+#     GMcommands += str([unpack('>h', p[4:6])[0]/ scale for p in stream[-1][-1]])[1:-2] + ","
     for cell in a:
         j+=1
         for data in cell:
             z.append(unpack('>h', data[0:2])[0])
             x.append(unpack('>h', data[2:4])[0])
             y.append(unpack('>h', data[4:6])[0])
-        print(str(j) + ": " + str(sum([p>0 for p in y])) + "  " + str(sum([p<0 for p in y])) + "  " + str(len(cell)) + "  " + str(y))
-        lz += math.degrees(sum(z) / scale / len(stream[-1][-1])) if len(cell)*0.7 < sum([p>0 for p in z]) else 0
-        lx += math.degrees(sum(x) / scale / len(stream[-1][-1])) if len(cell)*0.7 < sum([p>0 for p in x]) else 0
-        ly += math.degrees(sum(y) / scale / len(stream[-1][-1])) if len(cell)*0.7 < sum([p>0 for p in y]) else 0
-        lz += math.degrees(sum(z) / scale / len(stream[-1][-1])) if len(cell)*0.7 < sum([p<0 for p in z]) else 0
-        lx += math.degrees(sum(x) / scale / len(stream[-1][-1])) if len(cell)*0.7 < sum([p<0 for p in x]) else 0
-        ly += math.degrees(sum(y) / scale / len(stream[-1][-1])) if len(cell)*0.7 < sum([p<0 for p in y]) else 0
+#         print(str(j) + ": " + str(sum([p>0 for p in y])) + "  " + str(sum([p<0 for p in y])) + "  " + str(len(cell)) + "  " + str(y))
+        lz += math.degrees(sum(z) / scale) if len(cell)*0.7 < sum([p>0 for p in z]) else 0
+        lx += math.degrees(sum(x) / scale) if len(cell)*0.7 < sum([p>0 for p in x]) else 0
+        ly += math.degrees(sum(y) / scale) if len(cell)*0.7 < sum([p>0 for p in y]) else 0
+        lz += math.degrees(sum(z) / scale) if len(cell)*0.7 < sum([p<0 for p in z]) else 0
+        lx += math.degrees(sum(x) / scale) if len(cell)*0.7 < sum([p<0 for p in x]) else 0
+        ly += math.degrees(sum(y) / scale) if len(cell)*0.7 < sum([p<0 for p in y]) else 0
 #         lz /= 1.01
 #         lx /= 1.01
 #         ly /= 1.01
@@ -119,12 +120,14 @@ for i, stream in enumerate(gyroStreams):
 #         GMcommands += ("x: " + str(lx) + " y: " + str(ly) + " z: " + str(lz) + ", " + str(unpack('>f', stream[3][-1][0])[0]) + "\n")
         GMcommands += ("convert -verbose /tmp/goprostabilizer/"+ str(j) + ".tif -rotate " + str(-ly) + " /tmp/goprostabilizer/rotate/" + str(j) +".tif\n") # -gravity center -crop 50% 
 #             print("x:" + str(x) + "\n" + "y:" + str(y) + "\n" + "z:" + str(z) + "\n")
-    print()
+#     print()
 
 with open("/tmp/goprostabilizer/gmCommands.txt", "w") as out:
     out.write(GMcommands)
 
-subprocess.run(["gm", "batch", "/tmp/goprostabilizer/gmCommands.txt"], )
+# subprocess.run(["gm", "batch", "/tmp/goprostabilizer/gmCommands.txt"], )
+
+
 
 print("done!")
 
